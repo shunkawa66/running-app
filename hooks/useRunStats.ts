@@ -24,6 +24,14 @@ export function useRunStats(isTracking: boolean, routeCoordinates: [number, numb
   const [seconds, setSeconds] = useState(0);
   const [distance, setDistance] = useState(0); // メートル単位
 
+  // 軌跡がリセットされた（＝新しくスタートした）ときだけ、タイムと距離を0にする
+  useEffect(() => {
+    if (routeCoordinates.length === 0) {
+      setSeconds(0);
+      setDistance(0);
+    }
+  }, [routeCoordinates]);
+
   // 経過時間の計測（isTrackingがtrueのときだけカウントが進む）
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -31,18 +39,13 @@ export function useRunStats(isTracking: boolean, routeCoordinates: [number, numb
       timer = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
-    } else {
-      setSeconds(0); // ストップ時は0にリセット
     }
     return () => clearInterval(timer);
   }, [isTracking]);
 
   // 軌跡が更新されるたびに距離を累積計算する
   useEffect(() => {
-    if (!isTracking) {
-      setDistance(0);
-      return;
-    }
+    if (!isTracking) return;
     if (routeCoordinates.length < 2) return;
 
     const lastPoint = routeCoordinates[routeCoordinates.length - 1];
